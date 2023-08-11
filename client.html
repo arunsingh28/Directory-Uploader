@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>folder opener</title>
+</head>
+
+<body>
+    <form id="uploadForm" method="post" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="submit" value="Upload Folder">
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+
+                const form = document.getElementById('uploadForm');
+                const formData = new FormData(form);
+
+                try {
+                    const response = await fetch('http://localhost:3000/upload', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    const data = await response.json();
+                    console.log(data);
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            };
+
+            const form = document.getElementById('uploadForm');
+            form.addEventListener('submit', handleSubmit);
+        });
+    </script>
+</body>
+
+</html>
