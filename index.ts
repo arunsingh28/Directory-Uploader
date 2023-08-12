@@ -11,7 +11,7 @@ const PORT = 3000;
 const storage = multer.memoryStorage(); // Store file in memory for processing
 const upload = multer({ storage: storage });
 
-// create unzipped folder if not present
+// Create the 'unzipped' folder if it doesn't exist
 const unzippedPath = path.join(__dirname, 'unzipped');
 fs.ensureDirSync(unzippedPath);
 
@@ -22,18 +22,28 @@ app.post('/upload', upload.single('file'), async (req, res) => {
             const uploadedFileBuffer = req.file.buffer;
             const zip = new AdmZip(uploadedFileBuffer);
 
-            // Extract the zip contents to the unzipped folder
+            // Extract the zip contents to the 'unzipped' folder
             zip.extractAllTo(unzippedPath, true);
 
-            // Rename the extracted folder with a timestamp
-            const timestamp = new Date().toISOString().replace(/:/g, '-');
+            // Get the extracted folder's name and path
             const extractedFolderName = path.basename(req.file.originalname, path.extname(req.file.originalname));
-            const renamedFolderName = `${extractedFolderName}_${timestamp}`;
             const extractedFolderPath = path.join(unzippedPath, extractedFolderName);
-            const renamedFolderPath = path.join(unzippedPath, renamedFolderName);
-            await fs.promises.unlink(req.file.path);
-            await fs.promises.rename(extractedFolderPath, renamedFolderPath);
-            // Remove the uploaded file
+
+            // Check if the extracted folder exists before renaming
+            if (fs.existsSync(extractedFolderPath)) {
+                // Rename the extracted folder with a timestamp
+                const timestamp = new Date().toISOString().replace(/:/g, '-');
+                const renamedFolderName = `${extractedFolderName}_${timestamp}`;
+                const renamedFolderPath = path.join(unzippedPath, renamedFolderName);
+
+                // Rename the extracted folder
+                fs.renameSync(extractedFolderPath, renamedFolderPath);
+
+                // Remove the uploaded zip file
+                fs.unlinkSync(req.file.path);
+            } else {
+                console.error('Extracted folder not found');
+            }
 
             res.status(200).send('Zip file extracted and renamed successfully');
         } catch (error) {
